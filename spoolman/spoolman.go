@@ -11,6 +11,12 @@ import (
 	"github.com/tryy3/SpoolmanInventoryService/models"
 )
 
+type SpoolmanSettingsValue struct {
+	Value string `json:"value"`
+	IsSet bool `json:"is_set"`
+	Type string `json:"type"`
+}
+
 type SpoolmanClient struct {
 	APIURL string
 }
@@ -22,7 +28,7 @@ func NewSpoolmanClient(apiURL string) *SpoolmanClient {
 }
 
 func (c *SpoolmanClient) GetInventories() ([]string, error) {
-	response, err := http.Get(fmt.Sprintf("%s/location", c.APIURL))
+	response, err := http.Get(fmt.Sprintf("%s/setting/locations", c.APIURL))
 	if err != nil {
 		return nil, err
 	}
@@ -32,11 +38,18 @@ func (c *SpoolmanClient) GetInventories() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("Spoolman API response: %s", string(body))
-	var inventories []string
-	if err := json.Unmarshal(body, &inventories); err != nil {
+	log.Printf("Spoolman API response for settings values: %s", string(body))
+
+	var settingsValues SpoolmanSettingsValue
+	if err := json.Unmarshal(body, &settingsValues); err != nil {
 		return nil, err
 	}
+
+	var inventories []string
+	if err := json.Unmarshal([]byte(settingsValues.Value), &inventories); err != nil {
+		return nil, err
+	}
+	log.Printf("Got inventories: %+v", inventories)
 	return inventories, nil
 }
 
